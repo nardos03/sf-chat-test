@@ -7,6 +7,25 @@
 <body>
     <h1>My Test Website</h1>
     <p>Testing my Salesforce Live Agent Chat...</p>
+<script type='text/javascript'>
+	function initEmbeddedMessaging() {
+		try {
+			embeddedservice_bootstrap.settings.language = 'en_US'; // For example, enter 'en' or 'en-US'
+
+			embeddedservice_bootstrap.init(
+				'00DDE0000044T2w',
+				'New_Infra_Support',
+				'https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682',
+				{
+					scrt2URL: 'https://silicon4--chattest3.sandbox.my.salesforce-scrt.com'
+				}
+			);
+		} catch (err) {
+			console.error('Error loading Embedded Messaging: ', err);
+		}
+	};
+</script>
+<script type='text/javascript' src='https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682/assets/js/bootstrap.min.js' onload='initEmbeddedMessaging()'></script>
 
     </body>
 </html>
