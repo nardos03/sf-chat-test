@@ -92,14 +92,25 @@ window.location.href = "https://yaqs.corp.google.com/silicon/q/new?tag=infra";
 
 //YES = open Salesforce chat
 yes.addEventListener("click", function() {
-modal.style.display = "none";
+  // 1) Validate visitor info on your page (from Step 1)
+  const visitor = window.getVisitorInfo ? window.getVisitorInfo() : null;
+  if (!visitor) {
+    // Keeps the Ask Infra modal open, and shows the red error under your form
+    return;
+  }
 
-if (window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI) {
-embeddedservice_bootstrap.utilAPI.launchChat();
-} else {
-alert("Chat is still loading. Please try again in a moment.");
-}
+  // 2) Close your Ask Infra modal
+  modal.style.display = "none";
+
+  // 3) Launch chat
+  if (window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI) {
+    embeddedservice_bootstrap.utilAPI.launchChat();
+  } else {
+    alert("Chat is still loading. Please try again in a moment.");
+  }
 });
+
+    
 </script>
 
 <script type='text/javascript'>
