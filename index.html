@@ -9,6 +9,16 @@
     <p>Testing my Salesforce Live Agent Chat...</p>
 	
 	<button id="liveChatBtn" type="button">Live Chat with Infra</button>
+
+	<script>
+		document.getElementById("liveChatBtn").addEventListener("click", function() {
+			if (window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI) {
+				embeddedservice_bootstrap.utilAPI.launchChat();
+			} else {
+				alert("Chat is still loading. Please try again in a moment."); 
+			}
+		});
+	</script>
 	
 <script type='text/javascript'>
 	function initEmbeddedMessaging() {
