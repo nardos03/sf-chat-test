@@ -17,16 +17,17 @@
 	</div>
 
 	<script>
+		
 		const liveBtn = document.getElementById("liveChatBtn");
 const modal = document.getElementById("askInfraModal");
 const yes = document.getElementById("askYes");
 const no = document.getElementById("askNo");
 
-let isAgentAvailable = false; // Default to false
+let isAgentAvailable = false;
 
-// 1. Listen for Salesforce to report availability status automatically
-window.addEventListener("onEmbeddedServiceConfigurationDataRetrieved", (event) => {
-    console.log("Salesforce Configuration Received:", event.detail);
+// Listen for the specific Enhanced Messaging 'Availability' event
+window.addEventListener("onEmbeddedMessagingAvailabilityCallback", (event) => {
+    console.log("Availability Event Received:", event.detail);
     isAgentAvailable = event.detail.isAvailable;
 });
 
@@ -38,21 +39,18 @@ no.addEventListener("click", function() {
     window.location.href = "https://yaqs.corp.google.com/silicon/q/new?tag=infra";
 });
 
-// 2. Logic for the YES button
 yes.addEventListener("click", function() {
     modal.style.display = "none";
+    console.log("Yes clicked. Current agent availability status is:", isAgentAvailable);
 
-    if (isAgentAvailable) {
-        // If Salesforce told us someone is online
-        if (window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI) {
-            embeddedservice_bootstrap.utilAPI.launchChat();
-        }
+    if (isAgentAvailable === true) {
+        embeddedservice_bootstrap.utilAPI.launchChat();
     } else {
-        // If Salesforce told us everyone is offline
+        // This is the message you wanted!
         alert("All support agents are currently unavailable or offline. Please try again later.");
     }
 });
-
+		
 	</script>
 	
 <script type='text/javascript'>
