@@ -36,19 +36,20 @@ yes.addEventListener("click", function() {
     modal.style.display = "none";
 
     if (window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI) {
-        console.log("Checking availability...");
+       
+        // Trying the alternative function name for Enhanced Messaging
+        embeddedservice_bootstrap.utilAPI.checkAvailability().then((result) => {
+            console.log("Availability Result:", result);
 
-        embeddedservice_bootstrap.utilAPI.fetchCheckAvailability().then((result) => {
-            console.log("Salesforce availability result:", result);
-
-            // result.isAvailable is what Salesforce decides based on your Omni-Channel status
-            if (result.isAvailable === true) {
+            if (result && result.isAvailable) {
                 embeddedservice_bootstrap.utilAPI.launchChat();
             } else {
                 alert("All support agents are currently unavailable or offline. Please try again later.");
             }
         }).catch((err) => {
-            console.error("Availability Error:", err);
+            console.error("Chat Availability Error:", err);
+            // If the function fails entirely, we'll default to the alert for safety
+            alert("All support agents are currently unavailable or offline. Please try again later.");
         });
 
     } else {
