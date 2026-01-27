@@ -12,6 +12,8 @@
 
 	<script>
 		document.getElementById("liveChatBtn").addEventListener("click", function() {
+			console.log("Clicked. bootstrap:", !!window.embeddedservice_bootstrap, "utilAPI:", !!(window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI));
+			
 			if (window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI) {
 				embeddedservice_bootstrap.utilAPI.launchChat();
 			} else {
