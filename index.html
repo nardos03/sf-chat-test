@@ -35,25 +35,24 @@
 yes.addEventListener("click", function() {
     modal.style.display = "none";
 
-    // 1. Check if the API is ready
     if (window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI) {
-       
-        // 2. Fetch availability from Salesforce
+        console.log("Checking availability...");
+
         embeddedservice_bootstrap.utilAPI.fetchCheckAvailability().then((result) => {
-            if (result.isAvailable) {
-                // If an agent is online, launch the chat
+            console.log("Salesforce availability result:", result);
+
+            // result.isAvailable is what Salesforce decides based on your Omni-Channel status
+            if (result.isAvailable === true) {
                 embeddedservice_bootstrap.utilAPI.launchChat();
             } else {
-                // If NO agents are online, show your custom message
                 alert("All support agents are currently unavailable or offline. Please try again later.");
             }
-        }).catch((error) => {
-            console.error("Error checking availability:", error);
-            alert("Unable to check agent status. Please try again later.");
+        }).catch((err) => {
+            console.error("Availability Error:", err);
         });
 
     } else {
-        alert("Chat is still loading. Please try again in a moment.");
+        alert("Chat system not ready.");
     }
 });
 		
