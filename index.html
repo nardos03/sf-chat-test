@@ -8,6 +8,65 @@
     <h1>My Test Website</h1>
     <p>Testing my Salesforce Live Agent Chat...</p>
 
+<!-- Visitor Info (store for pre-chat) -->
+<div id="visitorInfo" style="margin:16px 0; padding:12px; border:1px solid #ccc; max-width:520px;">
+  <h3 style="margin:0 0 10px 0;">Your info (required)</h3>
+
+  <label>Email *</label><br/>
+  <input id="vEmail" type="email" placeholder="name@company.com" style="width:100%; padding:8px;" required />
+  <div style="height:10px;"></div>
+
+  <div style="display:flex; gap:10px;">
+    <div style="flex:1;">
+      <label>First name *</label><br/>
+      <input id="vFirst" type="text" placeholder="First" style="width:100%; padding:8px;" required />
+    </div>
+    <div style="flex:1;">
+      <label>Last name *</label><br/>
+      <input id="vLast" type="text" placeholder="Last" style="width:100%; padding:8px;" required />
+    </div>
+  </div>
+
+  <div id="vErr" style="color:#b00020; margin-top:10px; display:none;">
+    Please enter Email, First Name, and Last Name.
+  </div>
+</div>
+
+<script>
+  // Persist visitor info so it can be reused when launching chat
+  const fields = {
+    vEmail: document.getElementById("vEmail"),
+    vFirst: document.getElementById("vFirst"),
+    vLast: document.getElementById("vLast"),
+    vErr:  document.getElementById("vErr"),
+  };
+
+  // Load saved values
+  fields.vEmail.value = localStorage.getItem("chat_email") || "";
+  fields.vFirst.value = localStorage.getItem("chat_first") || "";
+  fields.vLast.value  = localStorage.getItem("chat_last")  || "";
+
+  // Save on change
+  ["input", "change"].forEach(evt => {
+    fields.vEmail.addEventListener(evt, () => localStorage.setItem("chat_email", fields.vEmail.value.trim()));
+    fields.vFirst.addEventListener(evt, () => localStorage.setItem("chat_first", fields.vFirst.value.trim()));
+    fields.vLast.addEventListener(evt, () => localStorage.setItem("chat_last", fields.vLast.value.trim()));
+  });
+
+  // Helper we’ll use in the next step
+  window.getVisitorInfo = function () {
+    const email = fields.vEmail.value.trim();
+    const first = fields.vFirst.value.trim();
+    const last  = fields.vLast.value.trim();
+
+    const ok = email && first && last;
+    fields.vErr.style.display = ok ? "none" : "block";
+
+    return ok ? { email, first, last } : null;
+  };
+</script>
+
+    
 <button id="liveChatBtn" type="button">Live Chat with Infra</button>
 
 <div id="askInfraModal" style="display:none; position:fixed; top:40%; left:40%; background:white; border:1px solid #333; padding:20px; z-index:9999;">
