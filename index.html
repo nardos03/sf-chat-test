@@ -31,16 +31,32 @@
 			window.location.href = "https://yaqs.corp.google.com/silicon/q/new?tag=infra";
 		});
 
-		//YES = open Salesforce chat
-		yes.addEventListener("click", function() {
-			modal.style.display = "none";
+		//YES = open Salesforce chat ONLY if agents are online
+yes.addEventListener("click", function() {
+    modal.style.display = "none";
 
-			if (window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI) {
-				embeddedservice_bootstrap.utilAPI.launchChat();
-			} else {
-				alert("Chat is still loading. Please try again in a moment.");
-			}
-		});	
+    // 1. Check if the API is ready
+    if (window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI) {
+       
+        // 2. Fetch availability from Salesforce
+        embeddedservice_bootstrap.utilAPI.fetchCheckAvailability().then((result) => {
+            if (result.isAvailable) {
+                // If an agent is online, launch the chat
+                embeddedservice_bootstrap.utilAPI.launchChat();
+            } else {
+                // If NO agents are online, show your custom message
+                alert("All support agents are currently unavailable or offline. Please try again later.");
+            }
+        }).catch((error) => {
+            console.error("Error checking availability:", error);
+            alert("Unable to check agent status. Please try again later.");
+        });
+
+    } else {
+        alert("Chat is still loading. Please try again in a moment.");
+    }
+});
+		
 	</script>
 	
 <script type='text/javascript'>
