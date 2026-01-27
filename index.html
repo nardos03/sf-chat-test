@@ -11,15 +11,30 @@
 	<button id="liveChatBtn" type="button">Live Chat with Infra</button>
 
 	<script>
-		document.getElementById("liveChatBtn").addEventListener("click", function() {
-			console.log("Clicked. bootstrap:", !!window.embeddedservice_bootstrap, "utilAPI:", !!(window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI));
-			
+		const liveBtn = document.getElementById("liveChatBtn");
+		const modal = document.getElementById("askInfraModal");
+		const yes = document.getElementById("askYes");
+		const no = document.getElementById("askNo");
+
+		liveBtn.addEventListener("click", function() {
+			modal.style.display = "block";
+		});
+
+		//NO = redirect to YAQs site
+		no.addEventListener("click", function() {
+			window.location.href = "https://yaqs.corp.google.com/silicon/q/new?tag=infra";
+		});
+
+		//YES = open Salesforce chat
+		yes.addEventListener("click", function() {
+			modal.style.display = "none";
+
 			if (window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI) {
 				embeddedservice_bootstrap.utilAPI.launchChat();
 			} else {
-				alert("Chat is still loading. Please try again in a moment."); 
+				alert("Chat is still loading. Please try again in a moment.");
 			}
-		});
+		});	
 	</script>
 	
 <script type='text/javascript'>
