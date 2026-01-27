@@ -35,20 +35,21 @@
 yes.addEventListener("click", function() {
     modal.style.display = "none";
 
+    // Debug check: See what functions actually exist in your browser
+    console.log("Checking Available APIs...", embeddedservice_bootstrap.utilAPI);
+
     if (window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI) {
        
-        // Trying the alternative function name for Enhanced Messaging
+        // We are using checkAvailability (No 'fetch' prefix)
         embeddedservice_bootstrap.utilAPI.checkAvailability().then((result) => {
-            console.log("Availability Result:", result);
-
-            if (result && result.isAvailable) {
+            console.log("Success! Result:", result);
+            if (result.isAvailable) {
                 embeddedservice_bootstrap.utilAPI.launchChat();
             } else {
                 alert("All support agents are currently unavailable or offline. Please try again later.");
             }
         }).catch((err) => {
-            console.error("Chat Availability Error:", err);
-            // If the function fails entirely, we'll default to the alert for safety
+            console.error("API call failed:", err);
             alert("All support agents are currently unavailable or offline. Please try again later.");
         });
 
