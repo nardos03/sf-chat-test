@@ -18,46 +18,41 @@
 
 	<script>
 		const liveBtn = document.getElementById("liveChatBtn");
-		const modal = document.getElementById("askInfraModal");
-		const yes = document.getElementById("askYes");
-		const no = document.getElementById("askNo");
+const modal = document.getElementById("askInfraModal");
+const yes = document.getElementById("askYes");
+const no = document.getElementById("askNo");
 
-		liveBtn.addEventListener("click", function() {
-			modal.style.display = "block";
-		});
+let isAgentAvailable = false; // Default to false
 
-		//NO = redirect to YAQs site
-		no.addEventListener("click", function() {
-			window.location.href = "https://yaqs.corp.google.com/silicon/q/new?tag=infra";
-		});
+// 1. Listen for Salesforce to report availability status automatically
+window.addEventListener("onEmbeddedServiceConfigurationDataRetrieved", (event) => {
+    console.log("Salesforce Configuration Received:", event.detail);
+    isAgentAvailable = event.detail.isAvailable;
+});
 
-		//YES = open Salesforce chat ONLY if agents are online
+liveBtn.addEventListener("click", function() {
+    modal.style.display = "block";
+});
+
+no.addEventListener("click", function() {
+    window.location.href = "https://yaqs.corp.google.com/silicon/q/new?tag=infra";
+});
+
+// 2. Logic for the YES button
 yes.addEventListener("click", function() {
     modal.style.display = "none";
 
-    // Debug check: See what functions actually exist in your browser
-    console.log("Checking Available APIs...", embeddedservice_bootstrap.utilAPI);
-
-    if (window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI) {
-       
-        // We are using checkAvailability (No 'fetch' prefix)
-        embeddedservice_bootstrap.utilAPI.checkAvailability().then((result) => {
-            console.log("Success! Result:", result);
-            if (result.isAvailable) {
-                embeddedservice_bootstrap.utilAPI.launchChat();
-            } else {
-                alert("All support agents are currently unavailable or offline. Please try again later.");
-            }
-        }).catch((err) => {
-            console.error("API call failed:", err);
-            alert("All support agents are currently unavailable or offline. Please try again later.");
-        });
-
+    if (isAgentAvailable) {
+        // If Salesforce told us someone is online
+        if (window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI) {
+            embeddedservice_bootstrap.utilAPI.launchChat();
+        }
     } else {
-        alert("Chat system not ready.");
+        // If Salesforce told us everyone is offline
+        alert("All support agents are currently unavailable or offline. Please try again later.");
     }
 });
-		
+
 	</script>
 	
 <script type='text/javascript'>
