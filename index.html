@@ -7,69 +7,61 @@
 <body>
     <h1>My Test Website</h1>
     <p>Testing my Salesforce Live Agent Chat...</p>
-	
-	<button id="liveChatBtn" type="button">Live Chat with Infra</button>
 
-	<div id="askInfraModal" style="display:none; position:fixed; top:40%; left:40%; background:white; border:1px solid #333; padding:20px; z-index:9999;">
-		<p>Have you tried Ask Infra?</p>
-		<button id="askYes">Yes</button>
-		<button id="askNo">No</button>
-	</div>
-	
-<script type='text/javascript'>
-	
-    // 1. PLACE THE LISTENER FIRST (Before anything else)
-    let isAgentAvailable = false;
+<button id="liveChatBtn" type="button">Live Chat with Infra</button>
 
-    window.addEventListener("onEmbeddedMessagingAvailabilityCallback", (event) => {
-        console.log("!!! SIGNAL RECEIVED FROM SALESFORCE:", event.detail.isAvailable);
-        isAgentAvailable = event.detail.isAvailable;
-    });
+<div id="askInfraModal" style="display:none; position:fixed; top:40%; left:40%; background:white; border:1px solid #333; padding:20px; z-index:9999;">
+<p>Have you tried Ask Infra?</p>
+<button id="askYes">Yes</button>
+<button id="askNo">No</button>
+</div>
 
-    // 2. Button Logic
-    function setupButtonLogic() {
-        const liveBtn = document.getElementById("liveChatBtn");
-        const modal = document.getElementById("askInfraModal");
-        const yes = document.getElementById("askYes");
-        const no = document.getElementById("askNo");
+<script>
+const liveBtn = document.getElementById("liveChatBtn");
+const modal = document.getElementById("askInfraModal");
+const yes = document.getElementById("askYes");
+const no = document.getElementById("askNo");
 
-        liveBtn.onclick = () => { modal.style.display = "block"; };
-        no.onclick = () => { window.location.href = "https://yaqs.corp.google.com/silicon/q/new?tag=infra"; };
+liveBtn.addEventListener("click", function() {
+modal.style.display = "block";
+});
 
-        yes.onclick = () => {
-            modal.style.display = "none";
-            console.log("Button clicked. Availability is currently:", isAgentAvailable);
-           
-            if (isAgentAvailable === true) {
-                embeddedservice_bootstrap.utilAPI.launchChat();
-            } else {
-                alert("All support agents are currently unavailable or offline. Please try again later.");
-            }
-        };
-    }
+//NO = redirect to YAQs site
+no.addEventListener("click", function() {
+window.location.href = "https://yaqs.corp.google.com/silicon/q/new?tag=infra";
+});
 
-    // 3. Salesforce Init
-    function initEmbeddedMessaging() {
-        try {
-            embeddedservice_bootstrap.settings.language = 'en_US';
-            embeddedservice_bootstrap.settings.hideChatButtonOnLoad = true;
+//YES = open Salesforce chat
+yes.addEventListener("click", function() {
+modal.style.display = "none";
 
-            embeddedservice_bootstrap.init(
-                '00DDE0000044T2w',
-                'New_Infra_Support',
-                'https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682',
-                {
-                    scrt2URL: 'https://silicon4--chattest3.sandbox.my.salesforce-scrt.com'
-                }
-            );
-            setupButtonLogic();
-        } catch (err) {
-            console.error('Error loading Embedded Messaging: ', err);
-        }
-    };
+if (window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI) {
+embeddedservice_bootstrap.utilAPI.launchChat();
+} else {
+alert("Chat is still loading. Please try again in a moment.");
+}
+});
 </script>
 
+<script type='text/javascript'>
+function initEmbeddedMessaging() {
+try {
+embeddedservice_bootstrap.settings.language = 'en_US'; // For example, enter 'en' or 'en-US'
+embeddedservice_bootstrap.settings.hideChatButtonOnLoad = true;
+embeddedservice_bootstrap.init(
+'00DDE0000044T2w',
+'New_Infra_Support',
+'https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682',
+{
+scrt2URL: 'https://silicon4--chattest3.sandbox.my.salesforce-scrt.com'
+}
+);
+} catch (err) {
+console.error('Error loading Embedded Messaging: ', err);
+}
+};
+</script>
 <script type='text/javascript' src='https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682/assets/js/bootstrap.min.js' onload='initEmbeddedMessaging()'></script>
-	
+
     </body>
 </html>
