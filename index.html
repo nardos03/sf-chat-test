@@ -118,6 +118,14 @@ function initEmbeddedMessaging() {
 try {
 embeddedservice_bootstrap.settings.language = 'en_US'; // For example, enter 'en' or 'en-US'
 embeddedservice_bootstrap.settings.hideChatButtonOnLoad = true;
+
+        // Prepopulate pre-chat fields (Embedded Messaging)
+    embeddedservice_bootstrap.settings.prepopulatedPrechatFields = {
+      Email: sessionStorage.getItem("visitorEmail") || "",
+      FirstName: sessionStorage.getItem("visitorFirstName") || "",
+      LastName: sessionStorage.getItem("visitorLastName") || ""
+    };
+
 embeddedservice_bootstrap.init(
 '00DDE0000044T2w',
 'New_Infra_Support',
