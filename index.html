@@ -15,11 +15,18 @@
 		<button id="askYes">Yes</button>
 		<button id="askNo">No</button>
 	</div>
+	
 <script type='text/javascript'>
-    // 1. Setup the variables
+	
+    // 1. PLACE THE LISTENER FIRST (Before anything else)
     let isAgentAvailable = false;
 
-    // 2. Define the button logic in a function we can call later
+    window.addEventListener("onEmbeddedMessagingAvailabilityCallback", (event) => {
+        console.log("!!! SIGNAL RECEIVED FROM SALESFORCE:", event.detail.isAvailable);
+        isAgentAvailable = event.detail.isAvailable;
+    });
+
+    // 2. Button Logic
     function setupButtonLogic() {
         const liveBtn = document.getElementById("liveChatBtn");
         const modal = document.getElementById("askInfraModal");
@@ -31,7 +38,7 @@
 
         yes.onclick = () => {
             modal.style.display = "none";
-            console.log("Checking availability before launch:", isAgentAvailable);
+            console.log("Button clicked. Availability is currently:", isAgentAvailable);
            
             if (isAgentAvailable === true) {
                 embeddedservice_bootstrap.utilAPI.launchChat();
@@ -41,17 +48,11 @@
         };
     }
 
-    // 3. Salesforce Initialization
+    // 3. Salesforce Init
     function initEmbeddedMessaging() {
         try {
             embeddedservice_bootstrap.settings.language = 'en_US';
             embeddedservice_bootstrap.settings.hideChatButtonOnLoad = true;
-
-            // IMPORTANT: The listener MUST be registered inside init
-            window.addEventListener("onEmbeddedMessagingAvailabilityCallback", (event) => {
-                console.log("Salesforce availability received:", event.detail.isAvailable);
-                isAgentAvailable = event.detail.isAvailable;
-            });
 
             embeddedservice_bootstrap.init(
                 '00DDE0000044T2w',
@@ -61,10 +62,7 @@
                     scrt2URL: 'https://silicon4--chattest3.sandbox.my.salesforce-scrt.com'
                 }
             );
-
-            // Activate your buttons
             setupButtonLogic();
-
         } catch (err) {
             console.error('Error loading Embedded Messaging: ', err);
         }
@@ -72,6 +70,6 @@
 </script>
 
 <script type='text/javascript' src='https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682/assets/js/bootstrap.min.js' onload='initEmbeddedMessaging()'></script>
-
+	
     </body>
 </html>
