@@ -15,62 +15,62 @@
 		<button id="askYes">Yes</button>
 		<button id="askNo">No</button>
 	</div>
-
-	<script>
-		
-		const liveBtn = document.getElementById("liveChatBtn");
-const modal = document.getElementById("askInfraModal");
-const yes = document.getElementById("askYes");
-const no = document.getElementById("askNo");
-
-let isAgentAvailable = false;
-
-// Listen for the specific Enhanced Messaging 'Availability' event
-window.addEventListener("onEmbeddedMessagingAvailabilityCallback", (event) => {
-    console.log("Availability Event Received:", event.detail);
-    isAgentAvailable = event.detail.isAvailable;
-});
-
-liveBtn.addEventListener("click", function() {
-    modal.style.display = "block";
-});
-
-no.addEventListener("click", function() {
-    window.location.href = "https://yaqs.corp.google.com/silicon/q/new?tag=infra";
-});
-
-yes.addEventListener("click", function() {
-    modal.style.display = "none";
-    console.log("Yes clicked. Current agent availability status is:", isAgentAvailable);
-
-    if (isAgentAvailable === true) {
-        embeddedservice_bootstrap.utilAPI.launchChat();
-    } else {
-        // This is the message you wanted!
-        alert("All support agents are currently unavailable or offline. Please try again later.");
-    }
-});
-		
-	</script>
-	
 <script type='text/javascript'>
-	function initEmbeddedMessaging() {
-		try {
-			embeddedservice_bootstrap.settings.language = 'en_US'; // For example, enter 'en' or 'en-US'
-embeddedservice_bootstrap.settings.hideChatButtonOnLoad = true;
-			embeddedservice_bootstrap.init(
-				'00DDE0000044T2w',
-				'New_Infra_Support',
-				'https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682',
-				{
-					scrt2URL: 'https://silicon4--chattest3.sandbox.my.salesforce-scrt.com'
-				}
-			);
-		} catch (err) {
-			console.error('Error loading Embedded Messaging: ', err);
-		}
-	};
+    // 1. Setup the variables
+    let isAgentAvailable = false;
+
+    // 2. Define the button logic in a function we can call later
+    function setupButtonLogic() {
+        const liveBtn = document.getElementById("liveChatBtn");
+        const modal = document.getElementById("askInfraModal");
+        const yes = document.getElementById("askYes");
+        const no = document.getElementById("askNo");
+
+        liveBtn.onclick = () => { modal.style.display = "block"; };
+        no.onclick = () => { window.location.href = "https://yaqs.corp.google.com/silicon/q/new?tag=infra"; };
+
+        yes.onclick = () => {
+            modal.style.display = "none";
+            console.log("Checking availability before launch:", isAgentAvailable);
+           
+            if (isAgentAvailable === true) {
+                embeddedservice_bootstrap.utilAPI.launchChat();
+            } else {
+                alert("All support agents are currently unavailable or offline. Please try again later.");
+            }
+        };
+    }
+
+    // 3. Salesforce Initialization
+    function initEmbeddedMessaging() {
+        try {
+            embeddedservice_bootstrap.settings.language = 'en_US';
+            embeddedservice_bootstrap.settings.hideChatButtonOnLoad = true;
+
+            // IMPORTANT: The listener MUST be registered inside init
+            window.addEventListener("onEmbeddedMessagingAvailabilityCallback", (event) => {
+                console.log("Salesforce availability received:", event.detail.isAvailable);
+                isAgentAvailable = event.detail.isAvailable;
+            });
+
+            embeddedservice_bootstrap.init(
+                '00DDE0000044T2w',
+                'New_Infra_Support',
+                'https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682',
+                {
+                    scrt2URL: 'https://silicon4--chattest3.sandbox.my.salesforce-scrt.com'
+                }
+            );
+
+            // Activate your buttons
+            setupButtonLogic();
+
+        } catch (err) {
+            console.error('Error loading Embedded Messaging: ', err);
+        }
+    };
 </script>
+
 <script type='text/javascript' src='https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682/assets/js/bootstrap.min.js' onload='initEmbeddedMessaging()'></script>
 
     </body>
