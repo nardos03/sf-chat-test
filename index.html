@@ -10,6 +10,12 @@
 	
 	<button id="liveChatBtn" type="button">Live Chat with Infra</button>
 
+	<div id="askInfraModal" style="display:none; position:fixed; top:40%; left:40%; background:white; border:1px solid #333; padding:20px; z-index:9999;">
+		<p>Have you tried Ask Infra?</p>
+		<button id="askYes">Yes</button>
+		<button id="askNo">No</button>
+	</div>
+
 	<script>
 		const liveBtn = document.getElementById("liveChatBtn");
 		const modal = document.getElementById("askInfraModal");
