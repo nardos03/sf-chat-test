@@ -1,125 +1,70 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Salesforce Chat Test</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
-</head>
-<body>
-    <h1>My Test Website</h1>
-    <p>Testing my Salesforce Live Agent Chat...</p>
+<script>
+    // --- 1. Form Persistence Logic ---
+    const fields = {
+        vEmail: document.getElementById("vEmail"),
+        vFirst: document.getElementById("vFirst"),
+        vLast: document.getElementById("vLast"),
+        vErr: document.getElementById("vErr"),
+    };
 
-    <div id="visitorInfo" style="margin:16px 0; padding:12px; border:1px solid #ccc; max-width:520px;">
-        <h3 style="margin:0 0 10px 0;">Your info (required)</h3>
-        <label>Email *</label><br/>
-        <input id="vEmail" type="email" placeholder="name@company.com" style="width:100%; padding:8px;" required />
-        <div style="height:10px;"></div>
-        <div style="display:flex; gap:10px;">
-            <div style="flex:1;">
-                <label>First name *</label><br/>
-                <input id="vFirst" type="text" placeholder="First" style="width:100%; padding:8px;" required />
-            </div>
-            <div style="flex:1;">
-                <label>Last name *</label><br/>
-                <input id="vLast" type="text" placeholder="Last" style="width:100%; padding:8px;" required />
-            </div>
-        </div>
-        <div id="vErr" style="color:#b00020; margin-top:10px; display:none;">
-            Please enter Email, First Name, and Last Name.
-        </div>
-    </div>
+    // Load saved values
+    fields.vEmail.value = localStorage.getItem("chat_email") || "";
+    fields.vFirst.value = localStorage.getItem("chat_first") || "";
+    fields.vLast.value = localStorage.getItem("chat_last") || "";
 
-    <button id="liveChatBtn" type="button">Live Chat with Infra</button>
+    // Save on change
+    ["input", "change"].forEach(evt => {
+        fields.vEmail.addEventListener(evt, () => localStorage.setItem("chat_email", fields.vEmail.value.trim()));
+        fields.vFirst.addEventListener(evt, () => localStorage.setItem("chat_first", fields.vFirst.value.trim()));
+        fields.vLast.addEventListener(evt, () => localStorage.setItem("chat_last", fields.vLast.value.trim()));
+    });
 
-    <div id="askInfraModal" style="display:none; position:fixed; top:40%; left:40%; background:white; border:1px solid #333; padding:20px; z-index:9999;">
-        <p>Have you tried Ask Infra?</p>
-        <button id="askYes">Yes</button>
-        <button id="askNo">No</button>
-    </div>
+    // --- 2. Modal and Chat Launch Logic ---
+    const liveBtn = document.getElementById("liveChatBtn");
+    const modal = document.getElementById("askInfraModal");
+    const yes = document.getElementById("askYes");
+    const no = document.getElementById("askNo");
 
-    <script>
-        const fields = {
-            vEmail: document.getElementById("vEmail"),
-            vFirst: document.getElementById("vFirst"),
-            vLast: document.getElementById("vLast"),
-            vErr: document.getElementById("vErr"),
-        };
+    liveBtn.addEventListener("click", () => modal.style.display = "block");
+    no.addEventListener("click", () => window.location.href = "https://yaqs.corp.google.com/silicon/q/new?tag=infra");
 
-        // Load saved values
-        fields.vEmail.value = localStorage.getItem("chat_email") || "";
-        fields.vFirst.value = localStorage.getItem("chat_first") || "";
-        fields.vLast.value = localStorage.getItem("chat_last") || "";
-
-        // Save on change
-        ["input", "change"].forEach(evt => {
-            fields.vEmail.addEventListener(evt, () => localStorage.setItem("chat_email", fields.vEmail.value.trim()));
-            fields.vFirst.addEventListener(evt, () => localStorage.setItem("chat_first", fields.vFirst.value.trim()));
-            fields.vLast.addEventListener(evt, () => localStorage.setItem("chat_last", fields.vLast.value.trim()));
-        });
-
-        window.addEventListener("onEmbeddedMessagingReady", () => {
-            console.log("Salesforce Messaging is ready!");
-            // This ensures data is ready before the user even clicks the button
-            updateSalesforceFields();
-        });
-
-        function updateSalesforceFields() {
-            const email = fields.vEmail.value.trim();
-            const first = fields.vFirst.value.trim();
-            const last = fields.vLast.value.trim();
-
-            if (window.embeddedservice_bootstrap) {
-                embeddedservice_bootstrap.settings.prepopulatedPrechatFields = {
-                    "_FirstName": first,
-                    "_LastName": last,
-                    "_Email": email
-                };
-                console.log("Fields mapped:", embeddedservice_bootstrap.settings.prepopulatedPrechatFields);
-            }
+    yes.addEventListener("click", function() {
+        if (!fields.vEmail.value || !fields.vFirst.value || !fields.vLast.value) {
+            fields.vErr.style.display = "block";
+            return;
         }
+        fields.vErr.style.display = "none";
+        modal.style.display = "none";
 
-        const liveBtn = document.getElementById("liveChatBtn");
-        const modal = document.getElementById("askInfraModal");
-        const yes = document.getElementById("askYes");
-        const no = document.getElementById("askNo");
+        if (window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI) {
+            embeddedservice_bootstrap.utilAPI.launchChat();
+        }
+    });
 
-        liveBtn.addEventListener("click", () => modal.style.display = "block");
-        no.addEventListener("click", () => window.location.href = "https://yaqs.corp.google.com/silicon/q/new?tag=infra");
+    // --- 3. Salesforce Initialization with Snippet Settings ---
+    function initEmbeddedMessaging() {
+        try {
+            embeddedservice_bootstrap.settings.language = 'en_US';
+            embeddedservice_bootstrap.settings.hideChatButtonOnLoad = true;
 
-        yes.addEventListener("click", function() {
-            const email = fields.vEmail.value.trim();
-            const first = fields.vFirst.value.trim();
-            const last = fields.vLast.value.trim();
-           
-            if (!email || !first || !last) {
-                fields.vErr.style.display = "block";
-                return;
-            }
-            fields.vErr.style.display = "none";
-            modal.style.display = "none";
+            // This specific structure is required for Enhanced Messaging
+            embeddedservice_bootstrap.settings.snippetSettingsFile = {
+                "prepopulatedPrechatFields": {
+                    "_FirstName": localStorage.getItem("chat_email") ? localStorage.getItem("chat_first") : "",
+                    "_LastName": localStorage.getItem("chat_email") ? localStorage.getItem("chat_last") : "",
+                    "_Email": localStorage.getItem("chat_email") || ""
+                }
+            };
 
-            // Final update right before launch
-            updateSalesforceFields();
-
-            if (window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI) {
-                embeddedservice_bootstrap.utilAPI.launchChat();
-            }
-        });
-
-        function initEmbeddedMessaging() {
-            try {
-                embeddedservice_bootstrap.settings.language = 'en_US';
-                embeddedservice_bootstrap.settings.hideChatButtonOnLoad = true;
-                embeddedservice_bootstrap.init(
-                    '00DDE0000044T2w',
-                    'New_Infra_Support',
-                    'https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682',
-                    { scrt2URL: 'https://silicon4--chattest3.sandbox.my.salesforce-scrt.com' }
-                );
-            } catch (err) {
-                console.error('Error loading Embedded Messaging: ', err);
-            }
-        };
-    </script>
-    <script type='text/javascript' src='https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682/assets/js/bootstrap.min.js' onload='initEmbeddedMessaging()'></script>
-</body>
-</html>
+            embeddedservice_bootstrap.init(
+                '00DDE0000044T2w',
+                'New_Infra_Support',
+                'https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682',
+                { scrt2URL: 'https://silicon4--chattest3.sandbox.my.salesforce-scrt.com' }
+            );
+        } catch (err) {
+            console.error('Error loading Embedded Messaging: ', err);
+        }
+    };
+</script>
+<script type='text/javascript' src='https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682/assets/js/bootstrap.min.js' onload='initEmbeddedMessaging()'></script>
