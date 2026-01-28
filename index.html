@@ -153,28 +153,54 @@
   </script>
 
   <!-- Embedded Messaging -->
-  <script type="text/javascript">
-    function initEmbeddedMessaging() {
-      try {
-        embeddedservice_bootstrap.settings.language = "en_US";
-        embeddedservice_bootstrap.settings.hideChatButtonOnLoad = true;
+ <script type="text/javascript">
+function initEmbeddedMessaging() {
+  try {
+    embeddedservice_bootstrap.settings.language = "en_US";
+    embeddedservice_bootstrap.settings.hideChatButtonOnLoad = true;
 
-        window.addEventListener("onEmbeddedMessagingReady", () => {
-          emReady = true;
-          console.log("[Embedded Messaging] Ready event fired.");
-        });
+    // 🔑 THIS is the critical piece
+    window.addEventListener("onEmbeddedMessagingReady", () => {
+      const email = localStorage.getItem("chat_email") || "";
+      const first = localStorage.getItem("chat_first") || "";
+      const last  = localStorage.getItem("chat_last") || "";
 
-        embeddedservice_bootstrap.init(
-          "00DDE0000044T2w",
-          "New_Infra_Support",
-          "https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682",
-          { scrt2URL: "https://silicon4--chattest3.sandbox.my.salesforce-scrt.com" }
-        );
-      } catch (err) {
-        console.error("Error loading Embedded Messaging: ", err);
+      console.log("Prechat values:", { email, first, last });
+
+      embeddedservice_bootstrap.prechatAPI.setVisiblePrechatFields({
+        "_email": {
+          value: email,
+          isEditableByEndUser: false
+        },
+        "_firstName": {
+          value: first,
+          isEditableByEndUser: false
+        },
+        "_lastName": {
+          value: last,
+          isEditableByEndUser: false
+        },
+        "_subject": {
+          value: "",
+          isEditableByEndUser: true
+        }
+      });
+    });
+
+    embeddedservice_bootstrap.init(
+      "00DDE0000044T2w",
+      "New_Infra_Support",
+      "https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682",
+      {
+        scrt2URL: "https://silicon4--chattest3.sandbox.my.salesforce-scrt.com"
       }
-    }
-  </script>
+    );
+  } catch (err) {
+    console.error("Error loading Embedded Messaging:", err);
+  }
+}
+</script>
+
 
   <script
     type="text/javascript"
