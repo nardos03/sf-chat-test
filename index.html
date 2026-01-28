@@ -5,106 +5,176 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1">
 </head>
 <body>
+  <h1>My Test Website</h1>
+  <p>Testing my Salesforce Live Agent Chat...</p>
 
-<h1>My Test Website</h1>
-<p>Testing Salesforce Embedded Messaging</p>
+  <!-- Visitor Info (store for pre-chat) -->
+  <div id="visitorInfo" style="margin:16px 0; padding:12px; border:1px solid #ccc; max-width:520px;">
+    <h3 style="margin:0 0 10px 0;">Your info (required)</h3>
 
-<button id="liveChatBtn">Live Chat with Infra</button>
+    <label>Email *</label><br/>
+    <input id="vEmail" type="email" placeholder="name@company.com" style="width:100%; padding:8px;" required />
+    <div style="height:10px;"></div>
 
-<div id="askInfraModal" style="display:none; position:fixed; top:40%; left:40%; background:white; border:1px solid #333; padding:20px; z-index:9999;">
-  <p>Have you tried Ask Infra?</p>
-  <button id="askYes">Yes</button>
-  <button id="askNo">No</button>
-</div>
+    <div style="display:flex; gap:10px;">
+      <div style="flex:1;">
+        <label>First name *</label><br/>
+        <input id="vFirst" type="text" placeholder="First" style="width:100%; padding:8px;" required />
+      </div>
+      <div style="flex:1;">
+        <label>Last name *</label><br/>
+        <input id="vLast" type="text" placeholder="Last" style="width:100%; padding:8px;" required />
+      </div>
+    </div>
 
-<script>
-/***********************
- * Modal logic
- ***********************/
-const liveBtn = document.getElementById("liveChatBtn");
-const modal = document.getElementById("askInfraModal");
-const yes = document.getElementById("askYes");
-const no = document.getElementById("askNo");
+    <div id="vErr" style="color:#b00020; margin-top:10px; display:none;">
+      Please enter Email, First Name, and Last Name.
+    </div>
+  </div>
 
-liveBtn.onclick = () => modal.style.display = "block";
+  <button id="liveChatBtn" type="button">Live Chat with Infra</button>
 
-no.onclick = () => {
-  window.location.href = "https://yaqs.corp.google.com/silicon/q/new?tag=infra";
-};
+  <div id="askInfraModal" style="display:none; position:fixed; top:40%; left:40%; background:white; border:1px solid #333; padding:20px; z-index:9999;">
+    <p>Have you tried Ask Infra?</p>
+    <button id="askYes">Yes</button>
+    <button id="askNo">No</button>
+    <div id="chatLoadMsg" style="margin-top:10px; color:#555; display:none;">
+      Chat is still loading… please wait 2–3 seconds and click Yes again.
+    </div>
+  </div>
 
-let isMessagingReady = false;
+  <script>
+    /*******************************
+     * 1) Capture + persist website “login-like” info
+     *******************************/
+    const fields = {
+      vEmail: document.getElementById("vEmail"),
+      vFirst: document.getElementById("vFirst"),
+      vLast:  document.getElementById("vLast"),
+      vErr:   document.getElementById("vErr")
+    };
 
-yes.onclick = () => {
-  modal.style.display = "none";
-  launchWhenReady();
-};
+    // Load saved values
+    fields.vEmail.value = localStorage.getItem("chat_email") || "";
+    fields.vFirst.value = localStorage.getItem("chat_first") || "";
+    fields.vLast.value  = localStorage.getItem("chat_last")  || "";
 
-function launchWhenReady() {
-  if (!isMessagingReady || !window.embeddedservice_bootstrap?.utilAPI) {
-    console.log("⏳ Waiting for Embedded Messaging to load...");
-    setTimeout(launchWhenReady, 500);
-    return;
-  }
+    // Save on change
+    ["input", "change"].forEach(evt => {
+      fields.vEmail.addEventListener(evt, () => localStorage.setItem("chat_email", fields.vEmail.value.trim()));
+      fields.vFirst.addEventListener(evt, () => localStorage.setItem("chat_first", fields.vFirst.value.trim()));
+      fields.vLast.addEventListener(evt,  () => localStorage.setItem("chat_last",  fields.vLast.value.trim()));
+    });
 
-  console.log("🚀 Launching chat");
-  embeddedservice_bootstrap.utilAPI.launchChat();
-}
+    window.getVisitorInfo = function () {
+      const email = fields.vEmail.value.trim();
+      const first = fields.vFirst.value.trim();
+      const last  = fields.vLast.value.trim();
 
-/***********************
- * Embedded Messaging Ready
- ***********************/
-window.addEventListener("onEmbeddedMessagingReady", () => {
-  console.log("✅ Embedded Messaging Ready");
+      const ok = email && first && last;
+      fields.vErr.style.display = ok ? "none" : "block";
+      return ok ? { email, first, last } : null;
+    };
 
-  isMessagingReady = true;
+    /*******************************
+     * 2) Embedded Messaging readiness + Pre-chat population
+     *******************************/
+    window.__emReady = false;
 
-  embeddedservice_bootstrap.prechatAPI.setVisiblePrechatFields({
-    "_email": {
-      value: "nardosa@google.com",
-      isEditableByEndUser: true
-    },
-    "_firstName": {
-      value: "Nardos",
-      isEditableByEndUser: true
-    },
-    "_lastName": {
-      value: "Assefa",
-      isEditableByEndUser: true
-    },
-    "_subject": {
-      value: "",
-      isEditableByEndUser: true
-    }
-  });
-});
+    // Salesforce doc pattern: wait for onEmbeddedMessagingReady, then setVisiblePrechatFields.
+    window.addEventListener("onEmbeddedMessagingReady", () => {
+      window.__emReady = true;
 
-/***********************
- * Init Embedded Messaging
- ***********************/
-function initEmbeddedMessaging() {
-  try {
-    embeddedservice_bootstrap.settings.language = "en_US";
-    embeddedservice_bootstrap.settings.hideChatButtonOnLoad = true;
+      // Pull values from your site storage
+      const email = localStorage.getItem("chat_email") || "";
+      const first = localStorage.getItem("chat_first") || "";
+      const last  = localStorage.getItem("chat_last")  || "";
 
-    embeddedservice_bootstrap.init(
-      "00DDE0000044T2w",
-      "New_Infra_Support",
-      "https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682",
-      {
-        scrt2URL: "https://silicon4--chattest3.sandbox.my.salesforce-scrt.com"
+      // Populate pre-chat fields using your CHANNEL VARIABLE NAMES:
+      // _email, _firstName, _lastName, _subject
+      try {
+        embeddedservice_bootstrap.prechatAPI.setVisiblePrechatFields({
+          "_email": {
+            "value": email,
+            "isEditableByEndUser": false
+          },
+          "_firstName": {
+            "value": first,
+            "isEditableByEndUser": false
+          },
+          "_lastName": {
+            "value": last,
+            "isEditableByEndUser": false
+          },
+          "_subject": {
+            "value": "",
+            "isEditableByEndUser": true
+          }
+        });
+      } catch (e) {
+        console.error("Failed to set prechat fields:", e);
       }
-    );
-  } catch (err) {
-    console.error("❌ Error loading Embedded Messaging:", err);
-  }
-}
-</script>
+    });
 
-<script
-  type="text/javascript"
-  src="https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682/assets/js/bootstrap.min.js"
-  onload="initEmbeddedMessaging()">
-</script>
+    /*******************************
+     * 3) Your modal logic + launch chat
+     *******************************/
+    const liveBtn = document.getElementById("liveChatBtn");
+    const modal = document.getElementById("askInfraModal");
+    const yes = document.getElementById("askYes");
+    const no = document.getElementById("askNo");
+    const chatLoadMsg = document.getElementById("chatLoadMsg");
 
+    liveBtn.addEventListener("click", () => {
+      modal.style.display = "block";
+      chatLoadMsg.style.display = "none";
+    });
+
+    no.addEventListener("click", () => {
+      window.location.href = "https://yaqs.corp.google.com/silicon/q/new?tag=infra";
+    });
+
+    yes.addEventListener("click", () => {
+      const visitor = window.getVisitorInfo ? window.getVisitorInfo() : null;
+      if (!visitor) return;
+
+      // If the bootstrap hasn't finished loading yet, tell the user
+      if (!window.__emReady || !window.embeddedservice_bootstrap || !embeddedservice_bootstrap.utilAPI) {
+        chatLoadMsg.style.display = "block";
+        return;
+      }
+
+      // Hide modal and launch chat
+      modal.style.display = "none";
+      chatLoadMsg.style.display = "none";
+      embeddedservice_bootstrap.utilAPI.launchChat();
+    });
+  </script>
+
+  <script type="text/javascript">
+    function initEmbeddedMessaging() {
+      try {
+        embeddedservice_bootstrap.settings.language = "en_US";
+        embeddedservice_bootstrap.settings.hideChatButtonOnLoad = true;
+
+        embeddedservice_bootstrap.init(
+          "00DDE0000044T2w",
+          "New_Infra_Support",
+          "https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682",
+          {
+            scrt2URL: "https://silicon4--chattest3.sandbox.my.salesforce-scrt.com"
+          }
+        );
+      } catch (err) {
+        console.error("Error loading Embedded Messaging: ", err);
+      }
+    }
+  </script>
+
+  <script
+    type="text/javascript"
+    src="https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682/assets/js/bootstrap.min.js"
+    onload="initEmbeddedMessaging()">
+  </script>
 </body>
 </html>
