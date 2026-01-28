@@ -120,10 +120,10 @@ embeddedservice_bootstrap.settings.language = 'en_US'; // For example, enter 'en
 embeddedservice_bootstrap.settings.hideChatButtonOnLoad = true;
 
         // Prepopulate pre-chat fields (Embedded Messaging)
-    embeddedservice_bootstrap.settings.prepopulatedPrechatFields = {
-      Email: sessionStorage.getItem("visitorEmail") || "",
-      FirstName: sessionStorage.getItem("visitorFirstName") || "",
-      LastName: sessionStorage.getItem("visitorLastName") || ""
+    embedded_svc.settings.prepopulatedPrechatFields = {
+        FirstName: "Nardos",
+        LastName: "Assefa",
+        Email: "nardosa@google.com"
     };
 
 embeddedservice_bootstrap.init(
