@@ -7,7 +7,7 @@
 
 <body>
   <h1>My Test Website</h1>
-  <p>Testing my Salesforce Live Agent Chat...</p>
+  <p>Testing my Salesforce Enhanced Chat (Embedded Messaging)...</p>
 
   <!-- Visitor Info (store for pre-chat) -->
   <div id="visitorInfo" style="margin:16px 0; padding:12px; border:1px solid #ccc; max-width:520px;">
@@ -42,7 +42,9 @@
   </div>
 
   <script>
-    // --- Visitor Info persistence (localStorage) ---
+    // ----------------------------
+    // Visitor info storage
+    // ----------------------------
     const fields = {
       vEmail: document.getElementById("vEmail"),
       vFirst: document.getElementById("vFirst"),
@@ -50,20 +52,17 @@
       vErr:   document.getElementById("vErr"),
     };
 
-    // Load saved values
     fields.vEmail.value = localStorage.getItem("chat_email") || "";
     fields.vFirst.value = localStorage.getItem("chat_first") || "";
     fields.vLast.value  = localStorage.getItem("chat_last")  || "";
 
-    // Save on change
     ["input","change"].forEach(evt => {
       fields.vEmail.addEventListener(evt, () => localStorage.setItem("chat_email", fields.vEmail.value.trim()));
       fields.vFirst.addEventListener(evt, () => localStorage.setItem("chat_first", fields.vFirst.value.trim()));
       fields.vLast.addEventListener(evt,  () => localStorage.setItem("chat_last",  fields.vLast.value.trim()));
     });
 
-    // Validate + return visitor object
-    window.getVisitorInfo = function () {
+    function getVisitorInfo() {
       const email = fields.vEmail.value.trim();
       const first = fields.vFirst.value.trim();
       const last  = fields.vLast.value.trim();
@@ -71,38 +70,84 @@
       const ok = email && first && last;
       fields.vErr.style.display = ok ? "none" : "block";
       return ok ? { email, first, last } : null;
-    };
+    }
 
-    // --- Modal + launch logic ---
+    // ----------------------------
+    // Embedded Messaging readiness + prechat injection
+    // ----------------------------
+    let emReady = false;
+
+    function setPrechatFieldsFromSession() {
+      const email = sessionStorage.getItem("visitorEmail") || "";
+      const first = sessionStorage.getItem("visitorFirstName") || "";
+      const last  = sessionStorage.getItem("visitorLastName") || "";
+
+      // If these are empty, we’ll see it in console immediately
+      console.log("[Prechat] Using:", { email, first, last });
+
+      if (!window.embeddedservice_bootstrap?.prechatAPI) {
+        console.warn("[Prechat] prechatAPI not available yet.");
+        return false;
+      }
+
+      // Use EXACT Parameter API Names from your screenshot:
+      // Email, FirstName, LastName, Subject
+      window.embeddedservice_bootstrap.prechatAPI.setVisiblePrechatFields({
+        "Email":     { value: email, isEditableByEndUser: false },
+        "FirstName": { value: first, isEditableByEndUser: false },
+        "LastName":  { value: last,  isEditableByEndUser: false },
+        "Subject":   { value: "",    isEditableByEndUser: true  }
+      });
+
+      return true;
+    }
+
+    function launchChatAfterPrechat() {
+      // 1) set prechat fields
+      const ok = setPrechatFieldsFromSession();
+      if (!ok) {
+        alert("Chat is still loading (prechatAPI not ready). Try again in a moment.");
+        return;
+      }
+
+      // 2) launch chat
+      if (window.embeddedservice_bootstrap?.utilAPI) {
+        window.embeddedservice_bootstrap.utilAPI.launchChat();
+      } else {
+        alert("Chat utilAPI not ready. Try again in a moment.");
+      }
+    }
+
+    // ----------------------------
+    // Modal + button flow
+    // ----------------------------
     const liveBtn = document.getElementById("liveChatBtn");
     const modal = document.getElementById("askInfraModal");
     const yes = document.getElementById("askYes");
     const no = document.getElementById("askNo");
 
-    liveBtn.addEventListener("click", () => {
-      modal.style.display = "block";
-    });
+    liveBtn.addEventListener("click", () => modal.style.display = "block");
 
     no.addEventListener("click", () => {
       window.location.href = "https://yaqs.corp.google.com/silicon/q/new?tag=infra";
     });
 
     yes.addEventListener("click", () => {
-      const visitor = window.getVisitorInfo ? window.getVisitorInfo() : null;
-      if (!visitor) return; // keep modal open + show error
+      const visitor = getVisitorInfo();
+      if (!visitor) return;
 
-      // Store values for the embedded messaging prechat hook
+      // Save into sessionStorage (what we inject into pre-chat)
       sessionStorage.setItem("visitorEmail", visitor.email);
       sessionStorage.setItem("visitorFirstName", visitor.first);
       sessionStorage.setItem("visitorLastName", visitor.last);
 
       modal.style.display = "none";
 
-      // Launch chat
-      if (window.embeddedservice_bootstrap && embeddedservice_bootstrap.utilAPI) {
-        embeddedservice_bootstrap.utilAPI.launchChat();
+      // KEY CHANGE: only launch AFTER Embedded Messaging is ready + fields injected
+      if (emReady) {
+        launchChatAfterPrechat();
       } else {
-        alert("Chat is still loading. Please try again in a moment.");
+        alert("Chat is still loading. Click Yes again in 2–3 seconds.");
       }
     });
   </script>
@@ -114,41 +159,16 @@
         embeddedservice_bootstrap.settings.language = "en_US";
         embeddedservice_bootstrap.settings.hideChatButtonOnLoad = true;
 
-        // IMPORTANT: wait until the component is ready, then set pre-chat fields
         window.addEventListener("onEmbeddedMessagingReady", () => {
-          const email = sessionStorage.getItem("visitorEmail") || "";
-          const first = sessionStorage.getItem("visitorFirstName") || "";
-          const last  = sessionStorage.getItem("visitorLastName") || "";
-
-          // Use your Parameter API Names EXACTLY as shown in Salesforce:
-          // Email, FirstName, LastName, Subject
-          embeddedservice_bootstrap.prechatAPI.setVisiblePrechatFields({
-            "Email": {
-              value: email,
-              isEditableByEndUser: false
-            },
-            "FirstName": {
-              value: first,
-              isEditableByEndUser: false
-            },
-            "LastName": {
-              value: last,
-              isEditableByEndUser: false
-            },
-            "Subject": {
-              value: "",
-              isEditableByEndUser: true
-            }
-          });
+          emReady = true;
+          console.log("[Embedded Messaging] Ready event fired.");
         });
 
         embeddedservice_bootstrap.init(
           "00DDE0000044T2w",
           "New_Infra_Support",
           "https://silicon4--chattest3.sandbox.my.site.com/ESWNewInfraSupport1769449481682",
-          {
-            scrt2URL: "https://silicon4--chattest3.sandbox.my.salesforce-scrt.com"
-          }
+          { scrt2URL: "https://silicon4--chattest3.sandbox.my.salesforce-scrt.com" }
         );
       } catch (err) {
         console.error("Error loading Embedded Messaging: ", err);
