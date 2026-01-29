@@ -51,13 +51,93 @@ function launchWhenReady() {
 }
 
 /***********************
+ * Helper: collect visitor context for hidden prechat fields
+ ***********************/
+async function getVisitorContext() {
+  // Screen resolution
+  const screenResolution = `${window.screen?.width || ""}x${window.screen?.height || ""}`;
+
+  // Referrer (can be blank depending on browser/privacy/referrer policy)
+  const referringSite = document.referrer || "";
+
+  // Language
+  const browserLanguage = navigator.language || navigator.userLanguage || "";
+
+  // Platform
+  const platform =
+    (navigator.userAgentData && navigator.userAgentData.platform) ||
+    navigator.platform ||
+    "";
+
+  // Network (not supported everywhere)
+  const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const network = conn
+    ? [conn.effectiveType, conn.downlink ? `${conn.downlink}Mbps` : "", conn.rtt ? `${conn.rtt}ms` : ""]
+        .filter(Boolean)
+        .join(" | ")
+    : "";
+
+  // Browser name (basic UA parsing)
+  const ua = navigator.userAgent || "";
+  let browser = "Unknown";
+  if (ua.includes("Edg/")) browser = "Edge";
+  else if (ua.includes("OPR/") || ua.includes("Opera")) browser = "Opera";
+  else if (ua.includes("Chrome/")) browser = "Chrome";
+  else if (ua.includes("Safari/") && !ua.includes("Chrome/")) browser = "Safari";
+  else if (ua.includes("Firefox/")) browser = "Firefox";
+
+  // Visitor IP (requires external call)
+  // NOTE: If this doesn't populate, you likely need to CSP-allowlist the domain in Salesforce.
+  let visitorIpAddress = "";
+  try {
+    const ipRes = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
+    const ipJson = await ipRes.json();
+    visitorIpAddress = ipJson.ip || "";
+  } catch (e) {
+    console.warn("⚠️ Could not fetch IP address:", e);
+  }
+
+  // Location options:
+  // 1) GeoLocation (prompts user) - optional. Leaving blank by default.
+  // 2) IP-based geolocation (requires a geo service) - optional.
+  let location = "";
+
+  // OPTIONAL: uncomment to attempt geolocation (will prompt user)
+  /*
+  try {
+    location = await new Promise((resolve) => {
+      if (!navigator.geolocation) return resolve("");
+      navigator.geolocation.getCurrentPosition(
+        (pos) => resolve(`${pos.coords.latitude},${pos.coords.longitude}`),
+        () => resolve(""),
+        { enableHighAccuracy: false, timeout: 4000, maximumAge: 600000 }
+      );
+    });
+  } catch (e) {
+    // leave blank
+  }
+  */
+
+  return {
+    browser,
+    browserLanguage,
+    location,
+    network,
+    platform,
+    referringSite,
+    screenResolution,
+    visitorIpAddress
+  };
+}
+
+/***********************
  * Embedded Messaging Ready
  ***********************/
-window.addEventListener("onEmbeddedMessagingReady", () => {
+window.addEventListener("onEmbeddedMessagingReady", async () => {
   console.log("✅ Embedded Messaging Ready");
-
   isMessagingReady = true;
 
+  // Visible prechat fields (what the user sees)
   embeddedservice_bootstrap.prechatAPI.setVisiblePrechatFields({
     "_email": {
       value: "nardosa@google.com",
@@ -76,6 +156,27 @@ window.addEventListener("onEmbeddedMessagingReady", () => {
       isEditableByEndUser: true
     }
   });
+
+  // Hidden prechat fields (your custom parameters / channel vars)
+  try {
+    const ctx = await getVisitorContext();
+
+    // Keys MUST match your Channel Variable Names exactly (case + underscores)
+    embeddedservice_bootstrap.prechatAPI.setHiddenPrechatFields({
+      Browser: ctx.browser,
+      Browser_Language: ctx.browserLanguage,
+      Location: ctx.location,
+      Network: ctx.network,
+      Platform: ctx.platform,
+      Referring_Site: ctx.referringSite,
+      Screen_Resolution: ctx.screenResolution,
+      Visitor_IP_Address: ctx.visitorIpAddress
+    });
+
+    console.log("✅ Hidden prechat fields set:", ctx);
+  } catch (err) {
+    console.warn("⚠️ Failed setting hidden prechat fields:", err);
+  }
 });
 
 /***********************
@@ -108,3 +209,4 @@ function initEmbeddedMessaging() {
 
 </body>
 </html>
+
