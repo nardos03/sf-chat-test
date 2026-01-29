@@ -46,7 +46,7 @@ function launchWhenReady() {
     return;
   }
 
-  console.log("🚀 Launching chat");
+  console.log("Launching chat");
   embeddedservice_bootstrap.utilAPI.launchChat();
 }
 
@@ -94,7 +94,7 @@ async function getVisitorContext() {
     const ipJson = await ipRes.json();
     visitorIpAddress = ipJson.ip || "";
   } catch (e) {
-    console.warn("⚠️ Could not fetch IP address:", e);
+    console.warn("Could not fetch IP address:", e);
   }
 
   // Location options:
@@ -134,7 +134,7 @@ async function getVisitorContext() {
  * Embedded Messaging Ready
  ***********************/
 window.addEventListener("onEmbeddedMessagingReady", async () => {
-  console.log("✅ Embedded Messaging Ready");
+  console.log("Embedded Messaging Ready");
   isMessagingReady = true;
 
   // Visible prechat fields (what the user sees)
@@ -173,9 +173,9 @@ window.addEventListener("onEmbeddedMessagingReady", async () => {
       Visitor_IP_Address: ctx.visitorIpAddress
     });
 
-    console.log("✅ Hidden prechat fields set:", ctx);
+    console.log("Hidden prechat fields set:", ctx);
   } catch (err) {
-    console.warn("⚠️ Failed setting hidden prechat fields:", err);
+    console.warn("Failed setting hidden prechat fields:", err);
   }
 });
 
@@ -196,7 +196,7 @@ function initEmbeddedMessaging() {
       }
     );
   } catch (err) {
-    console.error("❌ Error loading Embedded Messaging:", err);
+    console.error("Error loading Embedded Messaging:", err);
   }
 }
 </script>
