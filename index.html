@@ -54,22 +54,11 @@ function launchWhenReady() {
  * Helper: collect visitor context for hidden prechat fields
  ***********************/
 async function getVisitorContext() {
-  // Screen resolution
   const screenResolution = `${window.screen?.width || ""}x${window.screen?.height || ""}`;
-
-  // Referrer (can be blank depending on browser/privacy/referrer policy)
   const referringSite = document.referrer || "";
-
-  // Language
   const browserLanguage = navigator.language || navigator.userLanguage || "";
-
-  // Platform
-  const platform =
-    (navigator.userAgentData && navigator.userAgentData.platform) ||
-    navigator.platform ||
-    "";
-
-  // Network (not supported everywhere)
+  const platform = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || "";
+  
   const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   const network = conn
     ? [conn.effectiveType, conn.downlink ? `${conn.downlink}Mbps` : "", conn.rtt ? `${conn.rtt}ms` : ""]
@@ -77,7 +66,6 @@ async function getVisitorContext() {
         .join(" | ")
     : "";
 
-  // Browser name (basic UA parsing)
   const ua = navigator.userAgent || "";
   let browser = "Unknown";
   if (ua.includes("Edg/")) browser = "Edge";
@@ -86,8 +74,6 @@ async function getVisitorContext() {
   else if (ua.includes("Safari/") && !ua.includes("Chrome/")) browser = "Safari";
   else if (ua.includes("Firefox/")) browser = "Firefox";
 
-  // Visitor IP (requires external call)
-  // NOTE: If this doesn't populate, you likely need to CSP-allowlist the domain in Salesforce.
   let visitorIpAddress = "";
   try {
     const ipRes = await fetch("https://api.ipify.org?format=json", { cache: "no-store" });
@@ -97,31 +83,10 @@ async function getVisitorContext() {
     console.warn("Could not fetch IP address:", e);
   }
 
-  // Location options:
-  // 1) GeoLocation (prompts user) - optional. Leaving blank by default.
-  // 2) IP-based geolocation (requires a geo service) - optional.
-  let location = "";
-
-  // OPTIONAL: uncomment to attempt geolocation (will prompt user)
-  /*
-  try {
-    location = await new Promise((resolve) => {
-      if (!navigator.geolocation) return resolve("");
-      navigator.geolocation.getCurrentPosition(
-        (pos) => resolve(`${pos.coords.latitude},${pos.coords.longitude}`),
-        () => resolve(""),
-        { enableHighAccuracy: false, timeout: 4000, maximumAge: 600000 }
-      );
-    });
-  } catch (e) {
-    // leave blank
-  }
-  */
-
   return {
     browser,
     browserLanguage,
-    location,
+    location: "", // Geolocation omitted for speed/privacy
     network,
     platform,
     referringSite,
@@ -137,31 +102,17 @@ window.addEventListener("onEmbeddedMessagingReady", async () => {
   console.log("Embedded Messaging Ready");
   isMessagingReady = true;
 
-  // Visible prechat fields (what the user sees)
+  // Visible prechat fields
   embeddedservice_bootstrap.prechatAPI.setVisiblePrechatFields({
-    "_email": {
-      value: "nardosa@google.com",
-      isEditableByEndUser: true
-    },
-    "_firstName": {
-      value: "Nardos",
-      isEditableByEndUser: true
-    },
-    "_lastName": {
-      value: "Assefa",
-      isEditableByEndUser: true
-    },
-    "_subject": {
-      value: "",
-      isEditableByEndUser: true
-    }
+    "_email": { value: "nardosa@google.com", isEditableByEndUser: true },
+    "_firstName": { value: "Nardos", isEditableByEndUser: true },
+    "_lastName": { value: "Assefa", isEditableByEndUser: true },
+    "_subject": { value: "", isEditableByEndUser: true }
   });
 
-  // Hidden prechat fields (your custom parameters / channel vars)
+  // Hidden prechat fields
   try {
     const ctx = await getVisitorContext();
-
-    // Keys MUST match your Channel Variable Names exactly (case + underscores)
     embeddedservice_bootstrap.prechatAPI.setHiddenPrechatFields({
       Browser: ctx.browser,
       Browser_Language: ctx.browserLanguage,
@@ -172,7 +123,6 @@ window.addEventListener("onEmbeddedMessagingReady", async () => {
       Screen_Resolution: ctx.screenResolution,
       Visitor_IP_Address: ctx.visitorIpAddress
     });
-
     console.log("Hidden prechat fields set:", ctx);
   } catch (err) {
     console.warn("Failed setting hidden prechat fields:", err);
@@ -180,24 +130,26 @@ window.addEventListener("onEmbeddedMessagingReady", async () => {
 });
 
 /***********************
- * Init Embedded Messaging
+ * Init Embedded Messaging (UPDATED WITH NEW SNIPPET)
  ***********************/
 function initEmbeddedMessaging() {
-try {
-embeddedservice_bootstrap.settings.language = 'en_US'; // For example, enter 'en' or 'en-US'
+  try {
+    embeddedservice_bootstrap.settings.language = "en_US";
+    // We keep this to ensure the button doesn't pop up automatically
+    embeddedservice_bootstrap.settings.hideChatButtonOnLoad = true;
 
-embeddedservice_bootstrap.init(
-'00DDp0000015YvI',
-'New_Infra_Support',
-'https://silicon4.my.site.com/ESWNewInfraSupport1770290038401',
-{
-scrt2URL: 'https://silicon4.my.salesforce-scrt.com'
+    embeddedservice_bootstrap.init(
+      '00DDp0000015YvI',
+      'New_Infra_Support',
+      'https://silicon4.my.site.com/ESWNewInfraSupport1770290038401',
+      {
+        scrt2URL: 'https://silicon4.my.salesforce-scrt.com'
+      }
+    );
+  } catch (err) {
+    console.error("Error loading Embedded Messaging:", err);
+  }
 }
-);
-} catch (err) {
-console.error('Error loading Embedded Messaging: ', err);
-}
-};
 </script>
 
 <script
@@ -208,4 +160,3 @@ console.error('Error loading Embedded Messaging: ', err);
 
 </body>
 </html>
-
